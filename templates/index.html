@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Emotion Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Live Emotion Detection</h1>
+        <p>Powered by Deep Learning & Computer Vision</p>
+    </header>
+
+    <div class="container">
+        <div class="info">
+            <h2>How It Works</h2>
+            <ul>
+                <li>Webcam detects your facial expression in real time</li>
+                <li>Model predicts the emotion and shows it with emoji</li>
+                <li>Emotions tracked and visualized live</li>
+            </ul>
+        </div>
+
+        <div id="emotionDisplay">
+            <div id="emoji">😐</div>
+            <div id="label">Neutral</div>
+        </div>
+
+        <button id="startButton">🎥 Start Emotion Detection</button>
+        <img id="video" src="" alt="Live Video Feed" />
+
+        <canvas id="emotionChart" width="400" height="150"></canvas>
+    </div>
+
+    <footer>
+        &copy; 2025 SHUBH | Built with ❤️ using Flask, TensorFlow, and OpenCV
+    </footer>
+
+    <script>
+        const startButton = document.getElementById("startButton");
+        const videoElement = document.getElementById("video");
+        const emojiMap = {
+            "Angry": "😠",
+            "Disgust": "🤢",
+            "Fear": "😨",
+            "Happy": "😄",
+            "Sad": "😢",
+            "Surprise": "😲",
+            "Neutral": "😐"
+        };
+
+        startButton.addEventListener("click", function () {
+            startButton.textContent = "Camera Active 🎬";
+            startButton.disabled = true;
+            videoElement.style.display = "block";
+            videoElement.src = "{{ url_for('video_feed') }}";
+        });
+
+        function updateEmotion(label) {
+            document.getElementById("emoji").textContent = emojiMap[label] || "❓";
+            document.getElementById("label").textContent = label;
+        }
+
+        const mockEmotions = ["Happy", "Sad", "Neutral", "Surprise", "Angry"];
+        let i = 0;
+        setInterval(() => {
+            fetch("/emotion_feed")
+                .then(response => response.json())
+                .then(data => {
+                    const currentEmotion = data.emotion;
+                    updateEmotion(currentEmotion);
+                    addData(emotionChart, new Date().toLocaleTimeString(), currentEmotion);
+                });
+        }, 3000);
+        
+        
+
+        const emotionChart = new Chart(document.getElementById('emotionChart'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Emotion Over Time',
+                    data: [],
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        suggestedMin: 0,
+                        suggestedMax: 1
+                    }
+                }
+            }
+        });
+
+        function addData(chart, label, emotion) {
+            chart.data.labels.push(label);
+            chart.data.datasets[0].data.push(mockEmotions.indexOf(emotion));
+            if (chart.data.labels.length > 10) {
+                chart.data.labels.shift();
+                chart.data.datasets[0].data.shift();
+            }
+            chart.update();
+        }
+    </script>
+</body>
+</html>
